@@ -1,0 +1,48 @@
+
+    <div ng-controller='fqController as fqVm' class="row" ng-cloak>
+
+        <div class="col-md-12">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <span class="h4" id="faqs">FAQs</span>
+                    <button type="button" class="btn btn-primary btn-xs pull-right " data-ng-click="fqVm.add()" ng-show="fqVm.list"><h6>Add New FAQs</h6></button>
+                </div>
+                <div class="panel-body" data-ng-repeat="item in fqVm.items" ng-show="fqVm.list">
+
+
+                    <div class="card">
+                        <div class="card-header card-header-icon" data-background-color="rose">
+                            <i class="material-icons">assignment</i>
+                        </div>
+                        <h4 class="card-title bold">FAQ</h4>
+                        <hr />
+
+                        <div class="form-group-- col-md-10 pad">
+
+                            <br>
+                            <h4>{{item.question}}</h4>
+                            <br />
+                            <p><a ng-click="fqVm.select(item)">{{item.answer}}</a></p>
+
+
+                            <ul id="category" class="text-muted bot pull-left" data-ng-repeat="item in item.categories"><li>{{item.title}}</li></ul>
+                        </div>
+                        <hr />
+
+                        <div class="form-group text-center col-md-1 col-md-offset-1">
+
+                            <button type="button" rel="tooltip" class="btn btn-success buttons" data-original-title="" title="" ng-click="fqVm.select(item)">
+                                <i class="material-icons">edit</i>
+                            </button>
+                            <hr />
+
+                            <button type="button" rel="tooltip" class="btn btn-danger buttons" data-original-title="" title="" ng-click="fqVm.delete(item)">
+                                <i class="material-icons">close</i>
+                            </button>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        

@@ -1,0 +1,43 @@
+ALTER PROC [dbo].[Blogs_SearchByTitle]
+			@SearchText nvarchar(65)
+			,@PageIndex int
+			,@PageSize int
+
+AS
+/* TEST CODE!
+
+DECLARE  @SearchText nvarchar(15) = '%' + '1' + '%'
+		,@PageIndex int = 0
+		,@PageSize int = 20
+
+EXECUTE	dbo.Blogs_SearchByTitle
+		 @SearchText
+		,@PageIndex
+		,@PageSize 
+
+*/
+
+BEGIN 
+	DECLARE @SearchText2 nvarchar(65) = '%'+ @SearchText +'%'
+	DECLARE @Offset int = @PageIndex * @PageSize
+
+		SELECT [Id]
+			  ,[Title]
+			  ,[Subject]
+			  ,[Author]
+			  ,[PublishDate]
+			  ,[Content]
+			  ,[isPublished]
+			  ,[DateCreated]
+			  ,[DateModified]
+			  ,[Slug]
+			  ,[ImageUrl]
+			  ,[TotalCount] = COUNT(1) OVER()
+		FROM dbo.Blogs as B
+		Where B.Title LIKE @SearchText2
+				
+		ORDER BY B.Title
+		OFFSET @Offset ROWS
+		FETCH NEXT @PageSize ROWS ONLY;
+
+END

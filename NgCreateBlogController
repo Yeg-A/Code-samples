@@ -1,0 +1,334 @@
+   function CreateController($scope
+            , $window
+            , $baseController
+            , blogsService
+            , $anchorScroll
+            , $http
+            , imagesService
+            , filesService
+            , $serverModel) {
+                // Administrative stuff
+                var vm = this;
+                vm.$scope = $scope;
+                // Simulate inheritance to add
+                // $document, $log, $route, $routeParams, $systemEventService, $alertService, $object services
+                // to our controller.
+                $baseController.merge(vm, $baseController);
+                vm.blogsService = blogsService;
+                vm.$window = $window;
+                vm.$anchorScroll = $anchorScroll;
+
+                // ViewModel
+
+                vm.items = [];
+
+                vm.tagsList = [];
+
+                vm.iURL = null;
+
+                vm.item = null;  // copy of item being edited
+                vm.itemIndex = -1; // index of item being edited
+                vm.select = _select;
+                vm.save = _save;
+                vm.cancel = _cancel;
+                vm.add = _add;
+                vm.endEdit = _endEdit;
+                vm.showBlog = _showBlog;
+                vm.showPub = _showPub;
+                vm.showUnpub = _showUnpub;
+                vm.tagAdd = _tagAdd;
+
+
+
+                vm.notify = vm.blogsService.getNotifier($scope);
+                vm.scrollTo = _scrollTo;
+                vm.loadTags = _loadTags;
+
+                vm.render = _render;
+                vm.page = null;
+
+
+
+                vm.$serverModel = $serverModel;
+                vm.id = vm.$serverModel.item;
+
+                vm.blogId = vm.$routeParams.id;
+
+
+                _render();
+
+
+                // "The fold"
+
+
+                function _render() {
+
+                    if (vm.blogId > 0) {
+                        vm.blogsService.getBlogbyId(vm.blogId, _getByIdEditSuccess, _getByIdError);
+                    }
+
+
+                    _renderTags();
+
+                };
+
+
+                function _getByIdEditSuccess(data) {
+
+
+                    console.log(data);
+
+                    if (data.item) {
+
+
+                        vm.item = data.item;
+
+                        vm.tagsList = data.item.tags;
+                        console.log(data.item.tags);
+
+                        vm.item.publishDate = data.item.publishDate;
+                        console.log(vm.item.publishDate);
+
+                        vm.item.isPublished = data.item.isPublished;
+                        console.log(vm.item.isPublished);
+
+                        CKEDITOR.instances.content.setData(data.item.content);
+
+
+                    }
+
+                };
+
+
+                function _tagAdd($tag) {
+                    console.log($tag.text);
+                    if ($tag.id == null) {
+
+                        $tag.id = -1;
+                        vm.blogsService.postTag($tag, _postTagSuccess, _postError);
+
+                    }
+                };
+
+                function _loadTags(query) {
+                    return vm.tagArry.filter(function (tag) {
+                        return tag.text.toLowerCase().indexOf(query.toLowerCase()) != -1;
+                    });
+                }
+
+
+                function _postTagSuccess(response, tagData) {
+                    console.log(response);
+                    console.log(response.item);
+                    console.log(tagData);
+                    tagData.id = response.item;
+
+                    console.log(vm.tagsList);
+
+                };
+
+
+                function _scrollTo(id) {
+                    // Pass the 'id' as the parameter here, the page will scroll
+                    // to the correct place and the URL will remain intact.
+                    $anchorScroll(id);
+                };
+
+
+                function _renderBlogs() {
+                    vm.blogsService.getAllBlogs(_getAllSuccess, _getAllError);
+                };
+
+
+                function _getAllSuccess(data) {
+                    vm.notify(function () {
+                        vm.items = data.items;
+                    });
+                    //vm.$alertService.success("Retrieved all Blogs");
+                };
+
+                function _renderPublishedBlogs() {
+                    vm.blogsService.getByIsPublishedBlogs('true', _getAllPublishedSuccess, _getAllError);
+                };
+
+                function _getAllPublishedSuccess(data) {
+                    vm.notify(function () {
+                        vm.items = data.items;
+                    });
+                    //vm.$alertService.success("Retrieved all Published Blogs");
+                };
+
+                function _renderTags() {
+                    vm.blogsService.getAllTags(_getAllTagsSuccess, _getAllError);
+                };
+
+                function _getAllTagsSuccess(data) {
+                    vm.notify(function () {
+                        vm.tagArry = data.items;
+
+                    });
+                    //vm.$alertService.success("Retrieved all Tags");
+                };
+
+                function _renderUnpublishedBlogs() {
+                    vm.blogsService.getByIsPublishedBlogs('false', _getAllPublishedSuccess, _getAllError);
+                };
+
+                function _getAllUnpublishedSuccess(data) {
+                    vm.notify(function () {
+                        vm.items = data.items;
+                    });
+                    //vm.$alertService.success("Retrieved all Unpublished Blogs");
+                };
+
+                function _getAllError(jqXHR) {
+                    //vm.$alertService.error(jqXHR.responseText, "GetAll failed");
+                };
+
+                function _select(selectedBlog) {
+                    // Keep track of the position in vm.items of
+                    // the item we will be editing
+                    vm.itemIndex = vm.items.pagedItems.indexOf(selectedBlog);
+                    //get a fresh copy of the object to be edited from the database.
+                    vm.blogsService.getBlogbyId(selectedBlog.id, _getByIdSuccess, _getByIdError)
+                };
+
+                function _getByIdSuccess(data) {
+
+
+                    console.log(data);
+
+                    if (data.item.id) {
+
+                        vm.blogsService.$window.location = "/Admin/Blogs#!/" + data.item.id + "/edit";
+
+
+                        _scrollTo('profile');
+                    }
+
+                    //vm.$alertService.success("Retrieved item for editing from database");
+
+                };
+
+
+                function _getByIdError(jqXHR) {
+                    //vm.$alertService.error(jqXHR.responseText, "GetById failed");
+                };
+
+                // create a new empty item
+                function _add() {
+                    // Changing item from null to empty object indicates any
+                    // ui components for editing should be shown
+                    CKEDITOR.instances.content.setData('');
+                    vm.item = {};
+                    vm.tagsList = [];
+
+                    vm.itemIndex = -1;
+                };
+
+
+                function _endEdit() {
+                    vm.blogsService.$window.location = "/Admin/Blogs#!";
+
+
+                    vm.itemIndex = -1;
+                    //_render();
+
+                    _scrollTo('profile');
+
+                };
+
+                function _showBlog() {
+
+                    vm.itemIndex = -1;
+                    _renderBlogs();
+                };
+                function _showUnpub() {
+
+                    vm.itemIndex = -1;
+                    _renderUnpublishedBlogs();
+                };
+                function _showPub() {
+
+                    vm.itemIndex = -1;
+                    _renderPublishedBlogs();
+                };
+
+                function _save(blogItem) {
+
+                    var cats = [];
+                    for (var i = 0; i < vm.tagsList.length; i++) {
+                        console.log(vm.tagsList.length);
+                        console.log(vm.tagsList);
+                        console.log(blogItem);
+
+                        if (vm.tagsList[i].id) {
+                            cats.push(" " + vm.tagsList[i].id);
+
+                        }
+                        else {
+                            console.log("no item");
+                        }
+
+
+                    }
+                    console.log(cats);
+                    vm.item.tags = cats;
+                    vm.item.content = CKEDITOR.instances.content.getData();
+                    vm.item.slug = vm.item.title + vm.item.publishDate;
+
+
+                    console.log(blogItem)
+
+                    if (vm.item.id) {
+                        console.log(vm.item.id);
+
+                        vm.blogsService.blogUpdate(vm.item, vm.item.id, _putSuccess, _putError);
+                    }
+                    else {
+
+                        vm.blogsService.postBlog(vm.item, _postSuccess, _postError);
+                    }
+
+                };
+
+
+
+                function _putSuccess(data) {
+                    vm.notify(function () {
+                        // To update UI, replace with new version
+                        vm.items[vm.itemIndex] = vm.item;
+                        _endEdit();
+                        vm.$alertService.success("Update successful");
+                    });
+                };
+
+                function _putError(jqXHR) {
+                    vm.$alertService.error("Add Content", "Update failed");
+                };
+
+                function _postSuccess(data) {
+                    if (data.item) {
+                        vm.notify(function () {
+                            // To update UI, get id from data
+                            console.log(data.item);
+
+                            _endEdit();
+                            vm.$alertService.success("Post successful");
+                        });
+                    }
+                };
+
+
+                function _postError(jqXHR) {
+
+                    vm.$alertService.error("Add Content", "Post failed");
+                };
+
+
+                function _cancel() {
+                    _endEdit();
+                };
+
+
+            }

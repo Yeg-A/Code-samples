@@ -1,0 +1,94 @@
+ALTER proc [dbo].[FAQs_Insert]
+	   
+           @Question nvarchar(200)
+           , @Answer nvarchar(1000)
+           , @DisplayOrder int
+           , @CreatedBy nvarchar(128) 
+           , @ModifiedDate datetime2(7) = null
+		   , @CreatedDate datetime2(7) = null
+		   , @CatList IntIdTable READONLY
+		   , @Id int output 
+
+
+as
+/*
+
+	Declare @Id int = 0;
+
+
+	Declare 	
+			   @Question nvarchar(200) = ''
+			   , @Answer nvarchar(1000) = ''
+			   , @DisplayOrder int = 1
+			   , @CreatedBy nvarchar(128) = ''
+			   , @ModifiedBy nvarchar(128) = null
+			   , @ModifiedDate datetime2(7) = null
+
+			   	, @Categories IntIdTable 
+			
+Insert into @Categories (Data) values (),(),()
+select * from @Categories
+
+	Execute dbo.FAQs_Insert
+			
+			   @Question 
+			   , @Answer 
+			   , @DisplayOrder 
+			   , @CreatedBy
+			   , @ModifiedBy 
+			   , @ModifiedDate
+			   , @Categories
+			   , @Id output 
+
+
+
+	Select *
+	From dbo.FAQs
+	Where Id = @Id
+
+	Select *
+	From dbo.FAQCategory
+
+	Select *
+	From dbo.FAQCategories
+
+		
+	*/
+Begin
+
+	Declare @ModifiedBy nvarchar(128) = @CreatedBy
+	
+	
+	If (@CreatedDate IS null)
+	
+	BEGIN
+
+		SET @CreatedDate = GETUTCDATE () --null set to current UTC
+	END
+		SET @ModifiedDate = COALESCE(@ModifiedDate, getutcdate()) --takes this value if @created isn't null
+
+	INSERT INTO [dbo].[FAQs]
+           ([Question]
+           ,[Answer]
+           ,[DisplayOrder]
+           ,[CreatedBy]
+           ,[ModifiedBy]
+		   ,[CreatedDate]
+           ,[ModifiedDate])
+     VALUES
+           (@Question 
+           ,@Answer 
+           ,@DisplayOrder 
+           ,@CreatedBy
+           ,@ModifiedBy 
+		   ,@CreatedDate
+           ,@ModifiedDate)
+
+		   Set @Id = SCOPE_IDENTITY()
+
+Declare @FAQId int = @Id
+Insert into FAQCategories (FAQId, CatId)
+Select @FAQId, [Data] from @CatList
+
+
+End					

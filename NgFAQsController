@@ -1,0 +1,143 @@
+ (function () {
+            angular.module(APPNAME)
+            .controller('faqController', FaqController);
+
+            FaqController.$inject = ['$scope', '$window', '$baseController', 'faqsService', '$serverModel'];
+
+            function FaqController($scope, $window, $baseController, faqsService, $serverModel) {
+                // Administrative stuff
+                var vm = this;
+                vm.$scope = $scope;
+                // Simulate inheritance to add
+                // $document, $log, $route, $routeParams, $systemEventService, $alertService, $object services
+                // to our controller.
+                $baseController.merge(vm, $baseController);
+                vm.faqsService = faqsService;
+                vm.$window = $window;
+
+                // ViewModel
+                vm.items = [];
+                vm.itemInVisible = true;
+                vm.itemVisible = false;  // Faq of category selected
+                vm.itemIndex = -1; // index of item select
+                vm.select = _select;
+                vm.add = _add;
+                vm.faqs = [];
+                vm.categories = [];
+                vm.catId = null;
+                vm.notify = vm.faqsService.getNotifier($scope);
+                //vm.$serverModel.item
+
+
+                // "The fold"
+
+                _renderCat();
+
+
+                //get all categories
+                function _renderCat() {
+                    vm.faqsService.getfaqcategory(_getAllCatSuccess, _getAllCatError);
+                };
+
+                function _getAllCatSuccess(data) {
+                    vm.notify(function () {
+                        vm.categories = data.items;
+                    });
+
+
+                };
+
+                function _getAllCatError(jqXHR) {
+                    vm.$alertService.error(jqXHR.responseText, "GetAll failed");
+                };
+
+                //get all Faqs
+
+                function _renderFaq() {
+                    vm.faqsService.getUserFAQs(_getAllSuccess, _getAllError);
+                };
+
+                function _getAllSuccess(data) {
+                    console.log(data);
+                    vm.notify(function () {
+                        vm.faqs = data.items;
+                    });
+
+                    _add();
+
+                };
+
+                function _getAllError(jqXHR) {
+                    vm.$alertService.error(jqXHR.responseText, "GetAll failed");
+                };
+
+
+                //sort by display order
+                object.page.sortByDisplayOrder = function (faqData1, faqData2) {
+                    return parseInt(faqData1.displayOrder) - parseInt(faqData2.displayOrder);
+                };
+
+                function _sortData(faqData1, faqData2) {
+                    console.log("sorted");
+                    return parseInt(faqData1.displayOrder) - parseInt(faqData2.displayOrder);
+
+                };
+
+                function _renderCatFaqById(id) {
+                    vm.faqsService.getFaqCat(id, _getByIdSuccess, _getByIdError);
+                };
+
+                //capture
+                function _select(selectedFaqCategory) {
+
+
+                    console.log("CatId: " + selectedFaqCategory.id);
+
+
+                    // Keep track of the position in vm.items of
+                    // the item selected
+                    vm.itemIndex = vm.items.indexOf(selectedFaqCategory);
+                    // get a fresh copy of the object to be edited from the database.
+                    _renderCatFaqById(selectedFaqCategory.id);
+                    //show hidden FAQ container
+                    //_add();
+
+
+                };
+
+
+                function _getByIdSuccess(data) {
+                    console.log(data);
+                    console.log("FAQ" + data.item.faQs);
+
+
+                    if (data.item) {
+                        vm.notify(function () {
+                            vm.faqs = data.item.faQs;
+                            vm.faqs.sort(_sortData);
+                            //show hidden FAQ container
+
+                            _add();
+
+                        });
+                    }
+
+                };
+
+                function _getByIdError(jqXHR) {
+                    vm.$alertService.error(jqXHR.responseText, "GetById failed");
+                };
+
+
+                // show FAQ
+                function _add() {
+                    console.log("add");
+                    // Changing item from false to true indicates FAQ
+                    // should be shown
+                    vm.itemVisible = true;
+                    vm.itemInVisible = false;
+                    vm.itemIndex = -1;
+                }
+            };
+
+        })();

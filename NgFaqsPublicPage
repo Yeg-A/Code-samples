@@ -1,0 +1,65 @@
+<div ng-controller='faqController as exVm' ng-cloak>
+        <div class="page-header"
+             data-parallax="scroll"
+             style="background-image: url('/public_assets/img/city.jpg');">
+            <div class="container">
+
+                <h1 class="heading" ng-show="exVm.itemVisible"><a href="#" onclick="window.location.reload(true);">Help Center</a></h1>
+
+                <div class="row" id="listing">
+
+
+                    <div class="row">
+
+                        <div class="col-md-4" data-ng-repeat="item in exVm.categories" ng-show="exVm.itemInVisible">
+                            <a href="#" id="{{item.id}}" ng-click="exVm.select(item)">
+                                <div class="card card-plain card-blog">
+                                    <div class="card-image">
+
+
+
+                                        <img class="img img-raised" id="image" src="{{item.imageURL}}">
+
+
+                                        <div class="card-title">
+                                            {{item.title}}
+                                        </div>
+
+                                    </div>
+
+
+                                </div>
+                            </a>
+
+                        </div>
+
+                    </div>
+
+                </div>
+            </div>
+        </div>
+        <div @*class="main main-raised"*@ ng-show="exVm.itemVisible">
+
+
+            <div class="container pad">
+                <div class="panel-group" id="accordion" role="tablist" aria-multiselectable="true">
+                    <div data-ng-repeat="item in exVm.faqs">
+                        <div class="panel panel-default">
+
+                            <div class="panel-heading no-padding" role="tab">
+                                <a role="button" class="div" data-toggle="collapse" data-parent="#accordion" href="#{{item.id}}" aria-expanded="true" aria-controls="collapseOne">
+                                    <h4 class="panel-title left" id="question">{{item.question}}<i class="material-icons">keyboard_arrow_down</i></h4>
+                                </a>
+                            </div>
+                            <div id="{{item.id}}" class="panel-collapse collapse" role="tabpanel" aria-expanded="false" style="height: 0px;" aria-controls="{{item.id}}">
+                                <div class="panel-body left" id="answer">
+                                    {{item.answer}}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>

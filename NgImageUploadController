@@ -1,0 +1,157 @@
+function ImageController($scope
+           , $window
+           , $baseController
+           , blogsService
+           , $anchorScroll
+           , $http
+           , imagesService
+           , filesService
+           , $serverModel) {
+                // Administrative stuff
+                var vm = this;
+                vm.$scope = $scope;
+                // Simulate inheritance to add
+                // $document, $log, $route, $routeParams, $systemEventService, $alertService, $object services
+                // to our controller.
+                $baseController.merge(vm, $baseController);
+                vm.blogsService = blogsService;
+                vm.$window = $window;
+                vm.$anchorScroll = $anchorScroll;
+
+                // ViewModel
+                vm.loading = true;
+                vm.items = [];
+
+                vm.tagsList = [];
+
+                vm.iURL = null;
+
+                vm.item = null;  // copy of item being edited
+                vm.itemIndex = -1; // index of item being edited
+
+                vm.notify = vm.blogsService.getNotifier($scope);
+
+                vm.clickTrigger = _clickTrigger;
+                vm.uploadFile = _uploadFile;
+                vm.imagesService = imagesService;
+                vm.filesService = filesService;
+
+                vm.$serverModel = $serverModel;
+                vm.id = vm.$serverModel.item;
+
+                vm.blogId = vm.$routeParams.id;
+                vm.done = _done;
+                vm.scrollTo = _scrollTo;
+                vm.render = _render;
+
+                _render();
+
+
+                // "The fold"
+
+
+                function _render() {
+
+                    if (vm.blogId > 0) {
+                        vm.blogsService.getBlogbyId(vm.blogId, _getByIdEditSuccess, _getByIdError);
+                    }
+                }
+
+                function _getByIdEditSuccess(data) {
+
+
+                    console.log(data);
+
+                    if (data.item) {
+
+                        vm.notify(function () {
+
+                            vm.item = data.item;
+
+                        }
+
+              );
+                    }
+                }
+
+
+
+                function _getByIdError(jqXHR) {
+                    //vm.$alertService.error(jqXHR.responseText, "GetById failed");
+                };
+
+
+                function _scrollTo(id) {
+                    // Pass the 'id' as the parameter here, the page will scroll
+                    // to the correct place and the URL will remain intact.
+                    $anchorScroll(id);
+                };
+
+                function _done() {
+                    vm.blogsService.$window.location = "/Admin/Blogs#!";
+
+
+                    vm.itemIndex = -1;
+                    //_render();
+
+                    _scrollTo('profile');
+
+                };
+
+                /* Triggers the click event on the file input element and uploads the file right away. */
+                function _clickTrigger(mediaTypeId) {
+                    vm.mediaTypeId = mediaTypeId;
+                    var fileInput = angular.element("#uploadImg");
+                    fileInput.trigger("click");
+                }
+
+
+                function _uploadFile(fileInput) {
+                    console.log(fileInput);
+                    if (fileInput) {
+                        var fileValue = fileInput[0].files[0];
+                        var fileName = fileValue.name;
+
+                        var formData = new FormData();
+                        formData.append(fileName, fileValue);
+                        formData.mediaTypeId = vm.mediaTypeId;
+
+                        vm.filesService.postImage(vm.blogId, formData, _onUploadSuccess, _onUploadError);
+                    }
+                }
+
+                function _onUploadSuccess(data, formData) {
+                    if (data && data[0]) {
+                        updateDisplay(data);
+                        console.log(data);
+                        console.log(formData);
+                        formData.id = data;
+                        console.log(formData);
+                        vm.iURL = formData.id[0];
+                        console.log(vm.iURL);
+
+
+                    }
+
+                }
+
+
+                function _onUploadError() {
+                    console.log("The media file did not upload.");
+                }
+
+                function updateDisplay(data) {
+                    vm.notify(function () {
+
+                        var newImage = {
+                            imageUrl: data[0]
+                            , mediaTypeId: 1
+                        };
+                        vm.item = newImage;
+
+                    }
+
+                    );
+                }
+
+            }

@@ -1,0 +1,105 @@
+ALTER PROC [dbo].[Blogs_Insert_V2]
+		@Title nvarchar(128)
+		, @Subject nvarchar(128)
+		, @Slug nvarchar(50)
+		, @PublishDate datetime2(7) 
+		, @Content nvarchar(MAX)
+		, @isPublished bit 
+		, @DateCreated datetime2(7) = null
+		, @DateModified datetime2(7) = null
+		, @ImageUrl nvarchar(200) = null
+		, @TagList IntIdTable READONLY		
+		, @Id int OUTPUT
+
+AS
+/*
+--TEST CODE--
+	DECLARE @Id int = 0
+			, @Title nvarchar(128) = ''
+			, @Subject nvarchar (128) = ''
+			, @Slug nvarchar (50) = ''
+			, @PublishDate datetime2(7)  = ''
+			, @Content nvarchar(MAX) = ''
+			, @isPublished bit = 0
+		    , @DateCreated datetime2(7) = null
+		    , @DateModified datetime2(7) = null
+			, @ImageUrl nvarchar(200) = null
+
+			, @Tags IntIdTable 
+			
+Insert into @Tags (Data) values (),()
+select * from @Tags
+			
+	EXECUTE dbo.Blogs_Insert_V2
+			@Title
+			, @Subject
+			, @Slug
+			, @PublishDate
+			, @Content
+			, @isPublished 
+			, @DateCreated
+			, @DateModified
+			, @ImageUrl  
+
+			, @Tags
+			, @Id output 
+			
+	SELECT * 
+	FROM dbo.Blogs
+	WHERE Id = @Id
+
+	Select *
+	From dbo.BlogTags
+	Where Id = @Id
+
+	Select *
+	From dbo.Tags_Blogs
+
+	
+
+*/
+
+BEGIN
+
+
+If (@DateCreated IS null)
+	
+	BEGIN
+
+		SET @DateCreated = GETUTCDATE () --null set to current UTC
+	END
+		SET @DateModified = COALESCE(@DateModified, getutcdate()) --takes this value if @created isn't null
+	
+	
+	
+
+INSERT INTO [dbo].[Blogs]
+           ([Title]
+           ,[Subject]
+          
+           ,[PublishDate]
+           ,[Content]
+		       ,[isPublished]
+           ,[DateCreated]
+           ,[DateModified]
+           ,[Slug]
+           ,[ImageUrl])
+     VALUES
+           (@Title
+           , @Subject
+         
+           , @PublishDate
+           , @Content
+           , @isPublished
+           , @DateCreated
+           , @DateModified
+           , @Slug
+           , @ImageUrl)
+
+	SET @Id = SCOPE_IDENTITY()
+
+Declare @BlogId int = @Id
+Insert into Tags_Blogs (BlogId, TagId)
+Select @BlogId, [Data] from @TagList
+
+END

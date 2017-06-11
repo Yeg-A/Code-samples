@@ -1,0 +1,36 @@
+ALTER  PROCEDURE [dbo].[Blog_SelectPaginate]
+  	@PageIndex int
+	,@PageSize int 
+AS
+
+/* ----------------- TEST CODE ---------------------------
+
+	Declare @PageIndex int = 0
+			,@PageSize int = 12
+
+
+	Execute dbo.Blog_SelectPaginate   @PageIndex
+											,@PageSize
+
+*/-------------------------------------------------------
+BEGIN
+		DECLARE @Offset int = @PageIndex*@PageSize
+
+
+		SELECT [Id]
+			 , [Title]
+			  ,[Subject]
+			  ,[Author]
+			  ,[PublishDate]
+			  ,[Content]
+			  ,[isPublished]
+			  ,[DateCreated]
+			  ,[DateModified]
+			  ,[Slug]
+			  ,[ImageUrl]
+			  ,[TotalCount] = COUNT(1) OVER()
+	FROM dbo.Blogs as B
+	ORDER BY B.Id
+	OFFSET @Offset ROWS 
+	FETCH NEXT @PageSize ROWS ONLY
+END

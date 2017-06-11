@@ -1,0 +1,213 @@
+function TabController($scope
+             , $window
+             , $baseController
+             , blogsService
+             , $anchorScroll
+             , $http
+             , imagesService
+             , filesService
+             , $serverModel) {
+                // Administrative stuff
+                var vm = this;
+                vm.$scope = $scope;
+                // Simulate inheritance to add
+                // $document, $log, $route, $routeParams, $systemEventService, $alertService, $object services
+                // to our controller.
+                $baseController.merge(vm, $baseController);
+                vm.blogsService = blogsService;
+                vm.$window = $window;
+                vm.$anchorScroll = $anchorScroll;
+
+                // ViewModel
+
+                vm.currentRequestLabel = "Current Request:";
+
+                vm.tabs = [
+               { link: '#!/', label: 'Blogs' },
+               { link: '#!/create', label: 'create' }
+                //{ link: '#!/image', label: 'Upload Image' }
+                ];
+
+                vm.selectedTab = vm.tabs[0];
+
+                vm.tabClass = _tabClass;
+                vm.setSelectedTab = _setSelectedTab;
+
+                vm.items = [];
+
+
+
+                vm.item = null;  // copy of item being edited
+                vm.itemIndex = -1; // index of item being edited
+
+
+
+                vm.notify = vm.blogsService.getNotifier($scope);
+
+                vm.page = null;
+                vm.sendSearchTerm = _sendSearchTerm;
+                vm.searchTerm = null;
+
+
+
+                vm.$serverModel = $serverModel;
+                vm.id = vm.$serverModel.item;
+
+                vm.blogId = vm.$routeParams.id;
+
+
+                _render();
+
+
+                // "The fold"
+
+
+                function _render() {
+
+
+
+                    vm.$systemEventService.listen("searchStarted", _onSystemEventSearch);
+
+                    vm.setUpCurrentRequest(vm);
+
+                };
+
+
+                function _onSystemEventSearch(event, payload) {
+                    console.log(event);
+                    console.log(payload);
+                    console.log(payload[1].message)
+                    vm.searchTerm = payload[1].message;
+                    searchPage(0, vm.searchTerm)
+
+                }
+
+                function _tabClass(tab) {
+                    if (vm.selectedTab == tab) {
+                        return "active";
+                    } else {
+                        return "";
+                    }
+                }
+
+                function _setSelectedTab(tab) {
+                    console.log("set selected tab", tab);
+                    vm.selectedTab = tab;
+
+                }
+
+                function searchPage(pageIndex, searchTerm) {
+
+                    vm.blogsService.getSearch(searchTerm, pageIndex, vm.pageSize, _onGetPageSuccess, _onError);
+
+
+                }
+
+                function getPage(pageIndex, published) {
+
+                    if (published) {
+                        vm.blogsService.getTabPagination(published, pageIndex, vm.pageSize, _onGetPageSuccess, _onError);
+
+
+
+                    }
+                    else {
+                        vm.blogsService.getBlogsPagination(pageIndex, vm.pageSize, _onGetPageSuccess, _onError);
+                    }
+
+                }
+
+                // Initialize Model
+                function _startup() {
+                    vm.currentId = null;
+                    vm.item = null;
+                    vm.itemIndex = null;
+                    vm.currentPage = 1;
+                    vm.pageSize = 12;
+                }
+
+                // Change Page
+                function _ctrlPagination(page, pageSize) {
+                    var dbpageIndex = page - 1;
+                    getPage(dbpageIndex, vm.publishedFlag);
+
+                }
+
+                function _typePublishedChange(newPublishedFlag) {
+                    vm.publishedFlag = newPublishedFlag;
+                    getPage(0, vm.publishedFlag);
+
+                }
+
+
+                // on Ajax Error
+                function _onError(jqXHR) {
+                    //vm.$alertService.error(jqXHR.responseText, "Failed");
+                }
+
+                // On Get Success
+                function _onGetPageSuccess(data) {
+                    if (data) {
+                        vm.notify(function () {
+                            vm.items = data.item;
+
+                        });
+
+
+                    }
+                }
+
+
+                function _scrollTo(id) {
+                    // Pass the 'id' as the parameter here, the page will scroll
+                    // to the correct place and the URL will remain intact.
+                    $anchorScroll(id);
+                };
+
+
+                function _renderBlogs() {
+                    vm.blogsService.getAllBlogs(_getAllSuccess, _getAllError);
+                };
+
+
+                function _getAllSuccess(data) {
+                    vm.notify(function () {
+                        vm.items = data.items;
+                    });
+                    //vm.$alertService.success("Retrieved all Blogs");
+                };
+
+                function _renderPublishedBlogs() {
+                    vm.blogsService.getByIsPublishedBlogs('true', _getAllPublishedSuccess, _getAllError);
+                };
+
+                function _getAllPublishedSuccess(data) {
+                    vm.notify(function () {
+                        vm.items = data.items;
+                    });
+                    //vm.$alertService.success("Retrieved all Published Blogs");
+                };
+
+
+                function _renderUnpublishedBlogs() {
+                    vm.blogsService.getByIsPublishedBlogs('false', _getAllPublishedSuccess, _getAllError);
+                };
+
+                function _getAllUnpublishedSuccess(data) {
+                    vm.notify(function () {
+                        vm.items = data.items;
+                    });
+                    //vm.$alertService.success("Retrieved all Unpublished Blogs");
+                };
+
+                function _getAllError(jqXHR) {
+                    //vm.$alertService.error(jqXHR.responseText, "GetAll failed");
+                };
+
+
+
+                function _sendSearchTerm(searchStarted, eventName) {
+
+                    vm.$systemEventService.broadcast(searchStarted, { message: eventName });
+                };
+            }
