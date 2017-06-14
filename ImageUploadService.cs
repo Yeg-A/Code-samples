@@ -11,7 +11,7 @@
               
                 uploadRequest.BucketName = _configService.AwsBucketName;
                 uploadRequest.InputStream = fileStream;
-                uploadRequest.Key = fileNameAtAws;
+                uploadRequest.Key = ;
             
                 fileTransferUtility.Upload(uploadRequest);
 
